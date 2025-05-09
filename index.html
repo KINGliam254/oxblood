@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OXBLOOD</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+        :root {
+            --background: #000000;
+            --text: #fdfdfd;
+            --accent: #8B0000;
+            --ui-gray: #707070;
+            --transition-speed: 0.8s;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background);
+            color: var(--text);
+            overflow-x: hidden;
+            transition: background-color var(--transition-speed);
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 150 150' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+            opacity: 0.07;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .section {
+            min-height: 100vh;
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .section.active {
+            opacity: 1;
+        }
+
+        /* WELCOME SCREEN */
+        .welcome-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: var(--background);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 10;
+            transition: opacity 1.5s ease-in-out;
+        }
+
+        .welcome-logo {
+            font-size: 5rem;
+            font-weight: 600;
+            letter-spacing: 0.3rem;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 1.2s ease-out;
+            cursor: pointer;
+        }
+
+        .welcome-logo.visible {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .welcome-logo:hover {
+            color: var(--accent);
+        }
+
+        /* NAVIGATION */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 2rem;
+            display: flex;
+            justify-content: space-between;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+
+        nav.visible {
+            opacity: 1;
+        }
+
+        .logo {
+            font-size: 1.2rem;
+            font-weight: 600;
+            letter-spacing: 0.1rem;
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--text);
+            text-decoration: none;
+            font-size: 0.9rem;
+            letter-spacing: 0.05rem;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent);
+        }
+
+        /* GALLERY SECTION */
+        .gallery {
+            padding: 8rem 2rem 2rem;
+        }
+
+        .filters {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 4rem;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.8s ease;
+        }
+
+        .filters.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .filter-btn {
+            background: none;
+            border: none;
+            color: var(--ui-gray);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            color: var(--text);
+        }
+
+        .filter-btn.active::after {
+            content: "";
+            display: block;
+            width: 25%;
+            height: 1px;
+            background-color: var(--accent);
+            margin: 5px auto 0;
+        }
+
+        .masonry-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-auto-rows: 10px;
+            grid-gap: 2rem;
+        }
+
+        .art-item {
+            grid-row-end: span 30;
+            position: relative;
+            overflow: hidden;
+            border-radius: 2px;
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s ease;
+        }
+
+        .art-item.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .art-item.portrait {
+            grid-row-end: span 45;
+        }
+
+        .art-item.abstract {
+            grid-row-end: span 35;
+        }
+
+        .art-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.8s ease;
+        }
+
+        .art-item:hover img {
+            transform: scale(1.03);
+        }
+
+        .art-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 1.5rem;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0));
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        .art-item:hover .art-info {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .art-title {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 0.3rem;
+        }
+
+        .art-meta {
+            font-size: 0.8rem;
+            color: var(--ui-gray);
+        }
+
+        /* FULLSCREEN VIEW */
+        .fullscreen-view {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.95);
+            z-index: 200;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s ease;
+        }
+
+        .fullscreen-view.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .fullscreen-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .fullscreen-image {
+            max-width: 80%;
+            max-height: 80vh;
+            object-fit: contain;
+        }
+
+        .fullscreen-info {
+            position: absolute;
+            left: 2rem;
+            bottom: 2rem;
+            max-width: 20%;
+        }
+
+        .fullscreen-story {
+            position: absolute;
+            right: 2rem;
+            bottom: 2rem;
+            max-width: 20%;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .nav-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 2rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .nav-arrow:hover {
+            color: var(--accent);
+        }
+
+        .prev-btn {
+            left: 2rem;
+        }
+
+        .next-btn {
+            right: 2rem;
+        }
+
+        /* ABOUT SECTION */
+        .about {
+            padding: 10rem 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .about-content {
+            max-width: 600px;
+            padding: 0 2rem;
+        }
+
+        .about-title {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }
+
+        .about-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            margin-bottom: 2rem;
+        }
+
+        .about-quote {
+            font-size: 1.5rem;
+            line-height: 1.4;
+            color: var(--accent);
+            margin: 3rem 0;
+            font-weight: 300;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 0.8rem 2rem;
+            background-color: transparent;
+            color: var(--text);
+            border: 1px solid var(--text);
+            font-size: 0.9rem;
+            letter-spacing: 0.1rem;
+            margin-top: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .cta-button:hover {
+            background-color: var(--text);
+            color: var(--background);
+        }
+
+        /* CONTACT SECTION */
+        .contact {
+            padding: 6rem 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .contact-title {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+
+        .contact-quote {
+            font-size: 1.2rem;
+            color: var(--ui-gray);
+            margin-bottom: 3rem;
+        }
+
+        .contact-form {
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--ui-gray);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.8rem;
+            background-color: transparent;
+            border: none;
+            border-bottom: 1px solid var(--ui-gray);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .form-textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .submit-btn {
+            display: inline-block;
+            padding: 0.8rem 2rem;
+            background-color: transparent;
+            color: var(--text);
+            border: 1px solid var(--text);
+            font-size: 0.9rem;
+            letter-spacing: 0.1rem;
+            margin-top: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            background-color: var(--text);
+            color: var(--background);
+        }
+
+        /* FOOTER */
+        footer {
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+            opacity: 0.6;
+        }
+
+        .footer-links a {
+            color: var(--text);
+            text-decoration: none;
+            font-size: 0.8rem;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent);
+        }
+
+        /* MOBILE STYLES */
+        @media (max-width: 768px) {
+            .welcome-logo {
+                font-size: 3rem;
+            }
+
+            .masonry-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                grid-gap: 1rem;
+            }
+
+            .fullscreen-info, .fullscreen-story {
+                max-width: 80%;
+                text-align: center;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+
+            .fullscreen-info {
+                bottom: 6rem;
+            }
+
+            .fullscreen-story {
+                display: none;
+            }
+
+            .nav-arrow {
+                top: auto;
+                bottom: 2rem;
+            }
+
+            .prev-btn {
+                left: 2rem;
+            }
+
+            .next-btn {
+                right: 2rem;
+            }
+
+            .about-content {
+                padding: 0 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Welcome Screen -->
+    <div class="welcome-screen" id="welcome">
+        <div class="welcome-logo">OXBLOOD.</div>
+    </div>
+
+    <!-- Navigation -->
+    <nav id="navigation">
+        <a href="#" class="logo">OXBLOOD.</a>
+        <div class="nav-links">
+            <a href="#gallery">Gallery</a>
+            <a href="#about">About</a>
+            <a href="#contact">Contact</a>
+        </div>
+    </nav>
+
+    <!-- Gallery Section -->
+    <section class="section gallery" id="gallery">
+        <div class="filters" id="filters">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="portrait">Portraits</button>
+            <button class="filter-btn" data-filter="abstract">Abstract</button>
+            <button class="filter-btn" data-filter="concept">Concepts</button>
+            <button class="filter-btn" data-filter="experiment">Experiments</button>
+        </div>
+        <div class="masonry-grid" id="masonry-grid">
+            <!-- Artwork 1 -->
+            <div class="art-item portrait" data-category="portrait">
+                <img src="/api/placeholder/600/900" alt="Portrait artwork">
+                <div class="art-info">
+                    <div class="art-title">Transient Contemplation</div>
+                    <div class="art-meta">Oil on Canvas • 2023</div>
+                </div>
+            </div>
+            <!-- Artwork 2 -->
+            <div class="art-item abstract" data-category="abstract">
+                <img src="/api/placeholder/600/700" alt="Abstract artwork">
+                <div class="art-info">
+                    <div class="art-title">Fragments of Memory</div>
+                    <div class="art-meta">Mixed Media • 2022</div>
+                </div>
+            </div>
+            <!-- Artwork 3 -->
+            <div class="art-item" data-category="concept">
+                <img src="/api/placeholder/600/600" alt="Concept artwork">
+                <div class="art-info">
+                    <div class="art-title">Solitude</div>
+                    <div class="art-meta">Digital • 2024</div>
+                </div>
+            </div>
+            <!-- Artwork 4 -->
+            <div class="art-item portrait" data-category="portrait">
+                <img src="/api/placeholder/600/850" alt="Portrait artwork">
+                <div class="art-info">
+                    <div class="art-title">Ethereal Whispers</div>
+                    <div class="art-meta">Charcoal • 2023</div>
+                </div>
+            </div>
+            <!-- Artwork 5 -->
+            <div class="art-item abstract" data-category="abstract">
+                <img src="/api/placeholder/600/600" alt="Abstract artwork">
+                <div class="art-info">
+                    <div class="art-title">Chaotic Harmony</div>
+                    <div class="art-meta">Acrylic • 2022</div>
+                </div>
+            </div>
+            <!-- Artwork 6 -->
+            <div class="art-item" data-category="experiment">
+                <img src="/api/placeholder/600/800" alt="Experimental artwork">
+                <div class="art-info">
+                    <div class="art-title">Dissonance</div>
+                    <div class="art-meta">Experimental • 2024</div>
+                </div>
+            </div>
+            <!-- Artwork 7 -->
+            <div class="art-item" data-category="concept">
+                <img src="/api/placeholder/600/700" alt="Concept artwork">
+                <div class="art-info">
+                    <div class="art-title">Sacred Geometry</div>
+                    <div class="art-meta">Ink • 2023</div>
+                </div>
+            </div>
+            <!-- Artwork 8 -->
+            <div class="art-item portrait" data-category="portrait">
+                <img src="/api/placeholder/600/900" alt="Portrait artwork">
+                <div class="art-info">
+                    <div class="art-title">Silent Narrative</div>
+                    <div class="art-meta">Oil on Canvas • 2022</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Fullscreen View -->
+    <div class="fullscreen-view" id="fullscreen">
+        <div class="fullscreen-content">
+            <img src="" alt="Artwork fullscreen" class="fullscreen-image" id="fullscreen-image">
+            <div class="fullscreen-info">
+                <h2 class="art-title" id="fullscreen-title"></h2>
+                <p class="art-meta" id="fullscreen-meta"></p>
+            </div>
+            <div class="fullscreen-story" id="fullscreen-story"></div>
+            <button class="close-btn" id="close-btn">×</button>
+            <button class="nav-arrow prev-btn" id="prev-btn">←</button>
+            <button class="nav-arrow next-btn" id="next-btn">→</button>
+        </div>
+    </div>
+
+    <!-- About Section -->
+    <section class="section about" id="about">
+        <div class="about-content">
+            <h2 class="about-title">About</h2>
+            <p class="about-text">
+                I create to understand the world around me, to process emotions too complex for words alone. Every stroke, every texture is a conversation with myself and eventually with you.
+            </p>
+            <p class="about-text">
+                My work explores the boundaries between presence and absence, the tangible and ephemeral. I'm fascinated by how our memories reshape over time — blurring, focusing, distorting what we once knew as truth.
+            </p>
+            <div class="about-quote">
+                "I draw to understand things I can't explain. My work is loud. I'm not."
+            </div>
+            <p class="about-text">
+                Based in Berlin, I've spent the last decade working between traditional mediums and digital techniques. My influences range from classical portraiture to contemporary abstract expressionism, with a foundation in architectural form studies.
+            </p>
+            <a href="#contact" class="cta-button">LET'S WORK. LET'S TALK.</a>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="section contact" id="contact">
+        <h2 class="contact-title">Contact</h2>
+        <p class="contact-quote">Art is a conversation. Start one.</p>
+        <form class="contact-form">
+            <div class="form-group">
+                <label for="name" class="form-label">Name</label>
+                <input type="text" id="name" class="form-input" required>
+            </div>
+            <div class="form-group">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" id="email" class="form-input" required>
+            </div>
+            <div class="form-group">
+                <label for="message" class="form-label">Message</label>
+                <textarea id="message" class="form-input form-textarea" required></textarea>
+            </div>
+            <button type="submit" class="submit-btn">SEND</button>
+        </form>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-links">
+            <a href="mailto:hello@oxblood.art">hello@oxblood.art</a>
+            <a href="https://instagram.com/oxblood.art" target="_blank">@oxblood.art</a>
+        </div>
+    </footer>
+
+    <script>
+        // Welcome Screen Animation
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                document.querySelector('.welcome-logo').classList.add('visible');
+            }, 500);
+
+            setTimeout(() => {
+                document.getElementById('welcome').style.opacity = '0';
+                document.getElementById('welcome').style.pointerEvents = 'none';
+                document.getElementById('navigation').classList.add('visible');
+                document.querySelectorAll('.section').forEach(section => {
+                    section.classList.add('active');
+                });
+                document.querySelector('.filters').classList.add('visible');
+                animateArtItems();
+            }, 2500);
+        });
+
+        // Gallery Filter
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const artItems = document.querySelectorAll('.art-item');
+
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active class from all buttons
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                // Add active class to clicked button
+                button.classList.add('active');
+                
+                const filter = button.getAttribute('data-filter');
+                
+                // Filter art items
+                artItems.forEach(item => {
+                    const category = item.getAttribute('data-category');
+                    if (filter === 'all' || filter === category) {
+                        gsap.to(item, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' });
+                        item.style.display = 'block';
+                    } else {
+                        gsap.to(item, { opacity: 0, y: 20, duration: 0.5, ease: 'power2.out', onComplete: () => {
+                            item.style.display = 'none';
+                        }});
+                    }
+                });
+            });
+        });
+
+        // Fullscreen View
+        const fullscreenView = document.getElementById('fullscreen');
+        const fullscreenImage = document.getElementById('fullscreen-image');
+        const fullscreenTitle = document.getElementById('fullscreen-title');
+        const fullscreenMeta = document.getElementById('fullscreen-meta');
+        const fullscreenStory = document.getElementById('fullscreen-story');
+        const closeBtn = document.getElementById('close-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        
+        let currentIndex = 0;
+        const stories = [
+            "This piece emerged from a period of intense introspection. The subject's gaze reflects the duality of vulnerability and strength I was experiencing.",
+            "An exploration of memory's fragmentary nature. The overlapping shapes represent how recollections blur and shift over time.",
+            "Created during a solitary retreat, this work examines the space between isolation and connection.",
+            "I was captivated by how fleeting expressions can reveal profound emotional states. This portrait attempts to capture that ephemeral moment.",
+            "Chaos and order coexist in this abstract composition. The controlled strokes against spontaneous gestures mirror life's contradictions.",
+            "An experimental piece that emerged from allowing materials to guide the process rather than imposing control.",
+            "Inspired by ancient mathematical principles and their relationship to natural forms. The piece invites contemplation of universal patterns.",
+            "This portrait explores the narratives we carry silently within us, visible only through subtle cues in expression and posture."
+        ];
+
+        artItems.forEach((item, index) => {
+            item.addEventListener('click', () => {
+                // Set current index for navigation
+                currentIndex = index;
+                
+                // Set fullscreen content
+                const imgSrc = item.querySelector('img').src;
+                const title = item.querySelector('.art-title').textContent;
+                const meta = item.querySelector('.art-meta').textContent;
+                
+                fullscreenImage.src = imgSrc;
+                fullscreenTitle.textContent = title;
+                fullscreenMeta.textContent = meta;
+                fullscreenStory.textContent = stories[index % stories.length];
+                
+                // Show fullscreen view
+                fullscreenView.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            });
+        });
+
+        closeBtn.addEventListener('click', () => {
+            fullscreenView.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        });
+
+        function navigateArtwork(direction) {
+            let newIndex = currentIndex + direction;
+            
+            // Find next visible artwork
+            const visibleItems = Array.from(artItems).filter(item => item.style.display !== 'none');
+            
+            if (visibleItems.length === 0) return;
+            
+            // Handle wraparound
+            if (newIndex < 0) newIndex = visibleItems.length - 1;
+            if (newIndex >= visibleItems.length) newIndex = 0;
+            
+            // Update current index
+            currentIndex = Array.from(artItems).indexOf(visibleItems[newIndex % visibleItems.length]);
+            
+            // Update fullscreen content
+            const item = artItems[currentIndex];
+            const imgSrc = item.querySelector('img').src;
+            const title = item.querySelector('.art-title').textContent;
+            const meta = item.querySelector('.art-meta').textContent;
+            
+            // Animate transition
+            gsap.to(fullscreenImage, { opacity: 0, duration: 0.3, onComplete: () => {
+                fullscreenImage.src = imgSrc;
+                fullscreenTitle.textContent = title;
+                fullscreenMeta.textContent = meta;
+                fullscreenStory.textContent = stories[currentIndex % stories.length];
+                gsap.to(fullscreenImage, { opacity: 1, duration: 0.3 });
+            }});
+        }
+
+        prevBtn.addEventListener('click', () => navigateArtwork(-1));
+        nextBtn.addEventListener('click', () => navigateArtwork(1));
+
+        // Keyboard Navigation
+        document.addEventListener('keydown', (e) => {
+            if (fullscreenView.classList.contains('active')) {
+                if (e.key === 'Escape') {
+                    fullscreenView.classList.remove('active');
+                    document.body.style.overflow = 'auto';
+                } else if (e.key === 'ArrowLeft') {
+                    navigateArtwork(-1);
+                } else if (e.key === 'ArrowRight') {
+                    navigateArtwork(1);
+                }
+            }
+        });
+
+        // Animate art items on scroll
+        function animateArtItems() {
+            artItems.forEach((item, index) => {
+                gsap.to(item, {
+                    opacity: 1,
+                    y: 0,
+                    duration: 0.8,
+                    delay: 0.1 * index,
+                    ease: 'power2.out',
+                    scrollTrigger: {
+                        trigger: item,
+                        start: 'top bottom-=100',
+                        toggleClass: 'visible'
+                    }
+                });
+            });
+        }
+
+        // GSAP ScrollTrigger for sections
+        gsap.registerPlugin(ScrollTrigger);
+
+        gsap.utils.toArray('.section').forEach(section => {
+            ScrollTrigger.create({
+                trigger: section,
+                start: 'top center',
+                onEnter: () => section.classList.add('active')
+            });
+        });
+
+        // Smooth scroll for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
